@@ -1,0 +1,16 @@
+# Зависимости и сборка (для сайтов на Node-стеке)
+node_modules/
+dist/
+build/
+.astro/
+.next/
+
+# Переменные окружения
+.env
+.env.*
+
+# ОС / редакторы
+.DS_Store
+Thumbs.db
+.vscode/
+*.log
