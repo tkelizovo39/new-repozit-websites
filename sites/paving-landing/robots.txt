@@ -1,0 +1,8 @@
+# Демо-проект без реального домена — sitemap ниже указан на
+# плейсхолдер-домен https://example.com/paving-landing/, заменить на
+# настоящий адрес перед реальной публикацией (см. seo/seo-report.md).
+
+User-agent: *
+Allow: /
+
+Sitemap: https://example.com/paving-landing/sitemap.xml

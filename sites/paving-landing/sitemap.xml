@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Демо-проект без реального домена: URL ниже использует
+  плейсхолдер-домен https://example.com/paving-landing/ — заменить на
+  настоящий адрес сайта перед реальной публикацией (см. seo/seo-report.md).
+  Сайт одностраничный, поэтому в карте сайта одна запись — главная страница.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://example.com/paving-landing/</loc>
+    <lastmod>2026-09-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
