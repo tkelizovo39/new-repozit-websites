@@ -1,5 +1,5 @@
 /* =========================================================
-   Вкусняшки от Сашки — стили лендинга
+   Домашняя кухня от Александры Томиловой — стили лендинга
    Палитра/типографика/layout — по design/style-guide.md
    ========================================================= */
 
@@ -171,8 +171,13 @@ p{margin:0 0 1em;}
 .logo{text-decoration:none;}
 .logo__name{
   font-family:var(--font-heading); font-weight:700; color:var(--color-text);
-  font-size:1.15rem; line-height:1.1;
+  font-size:1.05rem; line-height:1.2;
 }
+/* Второй, более длинный «этаж» логотипа («от Александры Томиловой») —
+   мельче и чуть менее жирный, чтобы двухстрочное название не расталкивало
+   шапку на маленьких экранах (было «Вкусняшки от Сашки» короче). */
+.logo__name-sub{display:block; font-size:0.68em; font-weight:600; color:var(--color-text-secondary);}
+@media (min-width:480px){ .logo__name{font-size:1.15rem;} }
 .site-nav{display:none; gap:20px;}
 .site-nav a{color:var(--color-text); text-decoration:none; font-weight:600; font-size:0.95rem;}
 .site-nav a:hover{color:var(--color-accent);}
@@ -473,6 +478,19 @@ p{margin:0 0 1em;}
 .cart__actions{display:flex; flex-direction:column; gap:10px;}
 .cart__hint{font-size:0.85rem; color:var(--color-text-secondary); text-align:center; margin:0;}
 .cart.has-total .cart__hint{display:none;}
+/* Подсказка-ошибка (пустая корзина или незаполненные обязательные поля,
+   см. script.js — validateCartFields) должна быть видна всегда, даже когда
+   в корзине уже есть товары и обычная подсказка по умолчанию скрыта. */
+.cart__hint.is-error{
+  display:block !important;
+  color:var(--color-accent); font-weight:700;
+}
+/* Подсветка незаполненного обязательного поля при попытке отправить заказ
+   (Имя/Телефон всегда, Населённый пункт/Адрес — только при «Доставке»). */
+.field-error{
+  border-color:var(--color-accent) !important;
+  box-shadow:0 0 0 3px rgba(192,57,43,0.15);
+}
 .cart__copy-confirm{
   font-size:0.85rem; color:var(--color-natural); font-weight:700; text-align:center; margin:0;
 }

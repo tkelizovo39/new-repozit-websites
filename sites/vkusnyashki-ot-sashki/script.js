@@ -1,6 +1,7 @@
 /* =========================================================
-   Вкусняшки от Сашки — логика меню, конструктора заказа и
-   отправки заказа в WhatsApp / копирования текста.
+   Домашняя кухня от Александры Томиловой — логика меню,
+   конструктора заказа и отправки заказа в WhatsApp / email /
+   копирования текста.
    Простой JS без сборки и внешних зависимостей.
    ========================================================= */
 (function () {
@@ -22,18 +23,37 @@
   var TELEGRAM_URL = null;
   var FREE_DELIVERY_THRESHOLD = 5000;
 
+  // Formspree — сервис для тихой отправки письма на почту без открытия
+  // почтового клиента клиента. Пока НЕ подключён (заказчик зарегистрируется
+  // сам и пришлёт адрес формы вида https://formspree.io/f/xxxxxxxx).
+  // Пока null — используется запасной вариант через mailto:.
+  var FORMSPREE_ENDPOINT = null;
+  var ORDER_EMAIL = 'VkusDoma1712@yandex.ru';
+
   /* ---------------------------------------------------------
      1) Точные данные меню (см. brief.md — цифры/названия не менять)
      Типы карточек:
-       'tiers'        — сегмент из 2 цен (напр. 0.5 кг / 1 кг) + степпер количества
-       'unit'         — сегмент "за шт" / "за кг", у каждого режима свой степпер
-       'single'       — одна цена (за кг или за шт), степпер стартует с минимума
+       'tiers'        — сегмент из 2 цен (напр. 0.5 кг / 1 кг) + степпер количества.
+                        Используется у пельменей, вареников и (с 2026-09-13)
+                        у всех 4 позиций фрикаделек.
+       'unit'         — сегмент "за шт" / "за кг", у каждого режима свой степпер.
+                        С 2026-09-13 НЕ используется ни одной позицией меню
+                        (котлеты и отбивные упростили до одного варианта —
+                        только цена за кг, тип 'single'), но код и шаблон
+                        tpl-card-unit оставлены — на случай, если понадобится
+                        снова вернуть выбор "шт/кг" для какой-то позиции.
+       'single'       — одна цена (за кг или за шт), степпер стартует с минимума.
+                        Используется у перцев/голубцов/гнёзд, а также у
+                        котлет и отбивных (с 2026-09-13, только цена за кг).
        'weight-anchor' — гибкий вес от minG и выше (степпер с шагом stepG),
                          цена считается линейной интерполяцией между двумя
                          реперными точками из брифа: (minG, priceAtMin) и
                          (refG, priceAtRef) — так минимальная порция и 1 кг
                          стоят ровно столько, сколько указано в брифе, а
-                         между ними и выше — плавный линейный рост
+                         между ними и выше — плавный линейный рост.
+                         С 2026-09-13 НЕ используется ни одной позицией меню
+                         (фрикадельки перевели на фикс. варианты 0.5/1 кг,
+                         тип 'tiers') — код оставлен на будущее без изменений.
        'pack'         — фикс. фасовка (упаковка из packSize шт), степпер
                          считает количество упаковок (шаг 1, минимум 1).
                          Используется вместе с флагом priceTBD: true у
@@ -101,57 +121,56 @@
         {
           id: 'kotlety-klassicheskie',
           name: 'Котлеты классические в панировке (говядина-свинина, 100 г/шт)',
-          type: 'unit',
-          modes: [
-            { key: 'pc', label: 'за 1 шт', price: 550, step: 1, min: 1, suffix: 'шт' },
-            { key: 'kg', label: 'за 1 кг', price: 1100, step: 0.5, min: 0.5, suffix: 'кг' }
-          ]
+          type: 'single',
+          rate: 1100,
+          unit: 'кг',
+          step: 1,
+          min: 1,
+          priceLabel: '1 100 ₽ / кг'
         },
         {
           id: 'kotlety-kurinye',
           name: 'Котлеты куриные с пассерованными овощами в панировке (100 г/шт)',
-          type: 'unit',
-          modes: [
-            { key: 'pc', label: 'за 1 шт', price: 500, step: 1, min: 1, suffix: 'шт' },
-            { key: 'kg', label: 'за 1 кг', price: 1000, step: 0.5, min: 0.5, suffix: 'кг' }
-          ]
+          type: 'single',
+          rate: 1000,
+          unit: 'кг',
+          step: 1,
+          min: 1,
+          priceLabel: '1 000 ₽ / кг'
         },
         {
           id: 'frikadelki-kurinye-standart',
           name: 'Фрикадельки куриные с пассерованными овощами, стандарт',
-          note: 'продажа от 300 г',
-          type: 'weight-anchor',
-          minG: 300, priceAtMin: 500, refG: 1000, priceAtRef: 1000, stepG: 100
+          type: 'tiers',
+          tiers: [{ label: '0.5 кг', price: 500 }, { label: '1 кг', price: 1000 }]
         },
         {
           id: 'frikadelki-kurinye-mini',
           name: 'Фрикадельки куриные с пассерованными овощами, мини/детские',
-          note: 'продажа от 300 г',
-          type: 'weight-anchor',
-          minG: 300, priceAtMin: 500, refG: 1000, priceAtRef: 1000, stepG: 100
+          type: 'tiers',
+          tiers: [{ label: '0.5 кг', price: 500 }, { label: '1 кг', price: 1000 }]
         },
         {
           id: 'frikadelki-myasnye-standart',
           name: 'Фрикадельки мясные, стандарт',
-          note: 'продажа от 300 г',
-          type: 'weight-anchor',
-          minG: 300, priceAtMin: 600, refG: 1000, priceAtRef: 1200, stepG: 100
+          type: 'tiers',
+          tiers: [{ label: '0.5 кг', price: 600 }, { label: '1 кг', price: 1200 }]
         },
         {
           id: 'frikadelki-myasnye-mini',
           name: 'Фрикадельки мясные (говядина-свинина), мини/детские',
-          note: 'продажа от 300 г',
-          type: 'weight-anchor',
-          minG: 300, priceAtMin: 600, refG: 1000, priceAtRef: 1200, stepG: 100
+          type: 'tiers',
+          tiers: [{ label: '0.5 кг', price: 600 }, { label: '1 кг', price: 1200 }]
         },
         {
           id: 'otbivnye-kurinye',
           name: 'Отбивные куриные в сухарях',
-          type: 'unit',
-          modes: [
-            { key: 'pc', label: 'за 1 шт', price: 600, step: 1, min: 1, suffix: 'шт' },
-            { key: 'kg', label: 'за 1 кг', price: 1200, step: 0.5, min: 0.5, suffix: 'кг' }
-          ]
+          type: 'single',
+          rate: 1200,
+          unit: 'кг',
+          step: 1,
+          min: 1,
+          priceLabel: '1 200 ₽ / кг'
         }
       ]
     },
@@ -165,8 +184,8 @@
           type: 'single',
           rate: 900,
           unit: 'кг',
-          step: 0.5,
-          min: 0.5,
+          step: 1,
+          min: 1,
           priceLabel: '900 ₽ / кг'
         },
         {
@@ -175,8 +194,8 @@
           type: 'single',
           rate: 900,
           unit: 'кг',
-          step: 0.5,
-          min: 0.5,
+          step: 1,
+          min: 1,
           priceLabel: '900 ₽ / кг'
         },
         {
@@ -790,15 +809,41 @@
 
     document.getElementById('cart-total').textContent = formatRub(total);
 
-    // WhatsApp кнопка
-    var waBtn = document.getElementById('cart-whatsapp-btn');
-    if (hasItems) {
-      waBtn.href = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(buildOrderText());
-      waBtn.removeAttribute('aria-disabled');
-    } else {
-      waBtn.href = 'https://wa.me/' + WHATSAPP_NUMBER;
-      waBtn.setAttribute('aria-disabled', 'true');
+    // Кнопка «Сделать заказ» и подсказка под ней сбрасываются в исходное
+    // состояние при любом изменении содержимого корзины (добавили/убрали
+    // блюдо, поменяли количество, способ получения) — чтобы сообщение об
+    // ошибке валидации (см. validateCartFields) не «зависало» после того,
+    // как пользователь уже начал что-то менять.
+    resetCartHint();
+  }
+
+  var DEFAULT_CART_HINT = 'Выберите хотя бы одно блюдо, чтобы отправить заказ';
+  var REQUIRED_FIELD_IDS = ['cart-name', 'cart-phone', 'cart-zone', 'cart-address'];
+
+  function resetCartHint() {
+    var hintEl = document.getElementById('cart-hint');
+    hintEl.textContent = DEFAULT_CART_HINT;
+    hintEl.classList.remove('is-error');
+  }
+
+  // Проверка обязательных полей перед отправкой заказа (см. brief.md, п.8
+  // «Корзина — обязательные поля»): Имя и Телефон нужны всегда, Населённый
+  // пункт и Адрес — только при способе получения «Доставка» (при
+  // «Самовывоз» эти поля скрыты и не участвуют). Возвращает массив DOM-полей
+  // с пустыми обязательными значениями (пустой массив — всё заполнено).
+  function validateCartFields() {
+    var invalid = [];
+    var nameEl = document.getElementById('cart-name');
+    var phoneEl = document.getElementById('cart-phone');
+    if (!nameEl.value.trim()) invalid.push(nameEl);
+    if (!phoneEl.value.trim()) invalid.push(phoneEl);
+    if (cart.receiveMethod === 'delivery') {
+      var zoneEl = document.getElementById('cart-zone');
+      var addressEl = document.getElementById('cart-address');
+      if (!zoneEl.value) invalid.push(zoneEl);
+      if (!addressEl.value.trim()) invalid.push(addressEl);
     }
+    return invalid;
   }
 
   /* ---------------------------------------------------------
@@ -806,7 +851,7 @@
      --------------------------------------------------------- */
   function buildOrderText() {
     var lines = [];
-    lines.push('Здравствуйте! Хочу сделать заказ в «Вкусняшки от Сашки»:');
+    lines.push('Здравствуйте! Хочу сделать заказ в «Домашняя кухня от Александры Томиловой»:');
     lines.push('');
     cart.lines.forEach(function (line, idx) {
       // Позиции с ещё не определённой ценой (priceTBD) попадают в текст
@@ -842,7 +887,7 @@
       if (cartTotal() >= FREE_DELIVERY_THRESHOLD) {
         lines.push('Доставка бесплатно (заказ от 5000 ₽)');
       } else {
-        lines.push('Доставка 300–600 ₽, оплачивается отдельно — уточните точную стоимость');
+        lines.push('Доставка от 300 до 1000 ₽, оплачивается отдельно — уточните точную стоимость');
       }
       if (cart.address) lines.push('Адрес: ' + cart.address);
     }
@@ -876,19 +921,89 @@
 
     document.getElementById('cart-zone').addEventListener('change', function (e) {
       cart.zone = e.target.value;
+      e.target.classList.remove('field-error');
       renderCart();
     });
     document.getElementById('cart-address').addEventListener('input', function (e) {
       cart.address = e.target.value;
+      e.target.classList.remove('field-error');
       renderCart();
     });
     document.getElementById('cart-name').addEventListener('input', function (e) {
       cart.customerName = e.target.value;
+      e.target.classList.remove('field-error');
       renderCart();
     });
     document.getElementById('cart-phone').addEventListener('input', function (e) {
       cart.customerPhone = e.target.value;
+      e.target.classList.remove('field-error');
       renderCart();
+    });
+
+    // Единая кнопка «Сделать заказ» (см. brief.md, п.9): проверяет
+    // обязательные поля, затем одновременно открывает WhatsApp с готовым
+    // текстом заказа и отправляет копию на email — тихо через Formspree,
+    // если FORMSPREE_ENDPOINT задан, либо через mailto: как запасной вариант.
+    document.getElementById('cart-submit-btn').addEventListener('click', function () {
+      var hintEl = document.getElementById('cart-hint');
+      REQUIRED_FIELD_IDS.forEach(function (id) {
+        var f = document.getElementById(id);
+        if (f) f.classList.remove('field-error');
+      });
+
+      if (cart.lines.length === 0) {
+        hintEl.textContent = DEFAULT_CART_HINT;
+        hintEl.classList.add('is-error');
+        return;
+      }
+
+      var invalidFields = validateCartFields();
+      if (invalidFields.length) {
+        invalidFields.forEach(function (f) { f.classList.add('field-error'); });
+        hintEl.textContent = 'Заполните, пожалуйста, обязательные поля';
+        hintEl.classList.add('is-error');
+        invalidFields[0].focus();
+        return;
+      }
+
+      hintEl.classList.remove('is-error');
+      hintEl.textContent = DEFAULT_CART_HINT;
+
+      var text = buildOrderText();
+
+      // 1) WhatsApp — клиенту останется нажать «отправить» внутри чата
+      // (ограничение WhatsApp, без платного Business API не обойти).
+      window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(text), '_blank');
+
+      // 2) Копия на email — тихо через Formspree, если подключён, иначе mailto:.
+      if (FORMSPREE_ENDPOINT) {
+        fetch(FORMSPREE_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: text,
+            name: cart.customerName,
+            phone: cart.customerPhone
+          })
+        }).catch(function (err) {
+          console.warn('Не удалось отправить копию заказа через Formspree:', err);
+        });
+      } else {
+        window.open('mailto:' + ORDER_EMAIL + '?subject=' + encodeURIComponent('Заказ с сайта') + '&body=' + encodeURIComponent(text));
+      }
+
+      // Короткое визуальное подтверждение на кнопке (по аналогии с
+      // «Добавлено ✓» у кнопок карточек блюд).
+      var submitBtn = this;
+      var originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Заказ отправлен ✓';
+      submitBtn.classList.add('is-success');
+      submitBtn.disabled = true;
+      setTimeout(function () {
+        submitBtn.textContent = originalText;
+        submitBtn.classList.remove('is-success');
+        submitBtn.disabled = false;
+      }, 2500);
     });
 
     document.getElementById('cart-copy-btn').addEventListener('click', function () {
