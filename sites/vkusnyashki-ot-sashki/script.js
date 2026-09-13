@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  var WHATSAPP_NUMBER = '79146281298';
+  var WHATSAPP_NUMBER = '79168232824';
   var MAX_CHANNEL = 'https://max.ru/channel_minimym_na_kuhne';
   // Instagram и Telegram — заказчица сейчас регистрирует аккаунты (см.
   // brief.md, «Instagram и Telegram — РЕШЕНИЕ ИЗМЕНИЛОСЬ 2026-09-13»),

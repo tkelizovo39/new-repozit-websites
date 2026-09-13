@@ -125,6 +125,7 @@ p{margin:0 0 1em;}
   cursor:pointer; position:relative;
 }
 .icon-link--whatsapp{color:#128C4A; background:rgba(37,211,102,0.14);}
+.icon-link--max{color:#8A6110; background:rgba(217,164,65,0.2);}
 .icon-link--cart{background:var(--color-surface); border:1.5px solid var(--color-border);}
 /* Instagram/Telegram — фирменные цвета соцсетей (вне палитры style-guide,
    т.к. гайд их не описывает — сами соцсети появились в брифе только
