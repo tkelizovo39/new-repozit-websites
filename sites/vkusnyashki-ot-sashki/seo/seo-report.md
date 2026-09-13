@@ -107,13 +107,13 @@ HTML/CSS/JS, один URL с якорями.
 
 ## TODO для заказчика (не может быть сделано в коде агентом)
 
-1. **Реальный домен.** Везде, где сейчас стоит плейсхолдер
-   `https://example.com/`, нужно подставить настоящий домен сайта после
-   публикации:
-   - `index.html`: `link rel="canonical"`, `og:url`, `og:image`,
-     `twitter:image`, JSON-LD (`url`, `image`).
-   - `robots.txt`: строка `Sitemap:`.
-   - `sitemap.xml`: `<loc>`.
+1. **Реальный домен — ОБНОВЛЕНО 2026-09-13.** Плейсхолдер `example.com`
+   заменён на реальный адрес GitHub Pages
+   (`https://tkelizovo39.github.io/new-repozit-websites/sites/vkusnyashki-ot-sashki/`)
+   во всех местах: `index.html` (`canonical`, `og:url`, `og:image`,
+   `twitter:image`, JSON-LD), `robots.txt` (`Sitemap:`), `sitemap.xml`
+   (`<loc>`). Если позже подключите свой домен — эти же места нужно будет
+   поправить ещё раз.
 2. **Регистрация в поисковых системах** (ручное действие после публикации
    на реальном домене):
    - Яндекс.Вебмастер — добавить сайт, подтвердить права, отправить
