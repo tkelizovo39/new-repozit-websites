@@ -683,7 +683,10 @@
 
     var hasItems = cart.lines.length > 0;
     cartEl.classList.toggle('has-items', hasItems);
-    if (hasItems) cartEl.classList.add('is-open');
+    // Панель НЕ открывается сама при добавлении товара — только по клику
+    // пользователя на плашку-корзину внизу (мобильный) или на значок
+    // корзины в шапке (десктоп/мобильный). Иначе на телефоне шторка на
+    // 80vh перекрывает меню при каждом добавлении товара — неудобно.
 
     cart.lines.forEach(function (line) {
       var li = el('li', 'cart-line');
